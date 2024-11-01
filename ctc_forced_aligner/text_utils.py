@@ -154,7 +154,7 @@ def get_uroman_tokens(norm_transcripts, iso=None):
         UROMAN_PATH = os.path.join(sys._MEIPASS, "uroman")
     else:
         # UROMAN_PATH = os.path.join(os.getcwd(), "uroman")
-        UROMAN_PATH = os.path.join(os.path.dirname(__file__), "uroman")
+        UROMAN_PATH = os.path.join(os.path.dirname(__file__), "uroman", "bin")
         
     print(f"UROMAN_PATH: {UROMAN_PATH}")
     print(f"Contents of UROMAN_PATH: {os.listdir(UROMAN_PATH)}")
