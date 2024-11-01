@@ -9,6 +9,9 @@ from .norm_config import norm_config
 
 UROMAN_PATH = os.path.join(os.path.dirname(__file__), "uroman", "bin")
 
+import sys
+import re
+import shutil
 
 def text_normalize(
     text, iso_code, lower_case=True, remove_numbers=True, remove_brackets=False
@@ -144,8 +147,78 @@ def normalize_uroman(text):
     text = re.sub(" +", " ", text)
     return text.strip()
 
-
 def get_uroman_tokens(norm_transcripts, iso=None):
+    input_text = "\n".join(norm_transcripts) + "\n"
+
+    if getattr(sys, "frozen", False):
+        UROMAN_PATH = os.path.join(sys._MEIPASS, "uroman")
+    else:
+        UROMAN_PATH = os.path.join(os.getcwd(), "uroman")
+        
+    print(f"UROMAN_PATH: {UROMAN_PATH}")
+    print(f"Contents of UROMAN_PATH: {os.listdir(UROMAN_PATH)}")
+
+    uroman_pl_path = os.path.join(UROMAN_PATH, "uroman.pl")
+    print(f"Looking for uroman.pl at: {uroman_pl_path}")
+
+    if not os.path.exists(uroman_pl_path):
+        raise FileNotFoundError(f"uroman not found at {uroman_pl_path}")
+
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"PERL5LIB: {os.environ.get('PERL5LIB', 'Not set')}")
+
+    # 設置 PERL5LIB
+    perl5lib = os.path.join(UROMAN_PATH, 'lib')
+    os.environ['PERL5LIB'] = f"{perl5lib}:{os.environ.get('PERL5LIB', '')}"
+    print(f"Updated PERL5LIB: {os.environ['PERL5LIB']}")
+
+    # 檢查 perl 是否可用
+    perl_path = shutil.which('perl')
+    if not perl_path:
+        raise EnvironmentError("Perl is not installed or not in PATH")
+    print(f"Perl path: {perl_path}")
+
+    # 檢查 Perl 環境
+    try:
+        perl_version = subprocess.check_output([perl_path, '-v'], stderr=subprocess.STDOUT).decode()
+        print(f"Perl version: {perl_version}")
+        perl_modules = subprocess.check_output([perl_path, '-e', 'print join("\n", @INC)'], stderr=subprocess.STDOUT).decode()
+        print(f"Perl module paths: {perl_modules}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error checking Perl environment: {e.output.decode()}")
+
+    cmd = [perl_path, uroman_pl_path]
+    if iso in special_isos_uroman:
+        cmd.extend(["-l", iso])
+    print(f"Command: {' '.join(cmd)}")
+
+    try:
+        result = subprocess.run(
+            cmd, input=input_text, text=True, capture_output=True, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Error running uroman: {e}")
+        print(f"uroman stderr: {e.stderr}")
+        print(f"uroman stdout: {e.stdout}")
+        raise
+
+    output_text = result.stdout
+
+    outtexts = []
+    for line in output_text.splitlines():
+        line = " ".join(line.strip())
+        line = re.sub(r"\s+", " ", line).strip()
+        outtexts.append(line)
+
+    if len(outtexts) != len(norm_transcripts):
+        print(f"Warning: Expected {len(norm_transcripts)} outputs, got {len(outtexts)}")
+
+    uromans = [normalize_uroman(ot) for ot in outtexts]
+
+    return uromans
+
+
+def _get_uroman_tokens(norm_transcripts, iso=None):
     input_text = "\n".join(norm_transcripts) + "\n"
 
     assert os.path.exists(os.path.join(UROMAN_PATH, "uroman.pl")), "uroman not found"
