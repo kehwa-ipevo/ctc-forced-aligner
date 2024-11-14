@@ -270,7 +270,20 @@ def split_text(text: str, split_size: str = "word"):
     elif split_size == "word":
         return text.split()
     elif split_size == "char":
-        return list(text)
+        # return list(text)
+        print(f"ctc forced aligner: {text}")
+        merge_text = []
+        temp = []
+        for i in list(text):
+            if 65<=ord(i)<=122:
+                temp.append(i)
+            else:
+                if temp:
+                    merge_text.append("".join(temp))
+                    temp=[]
+                merge_text.append(i)
+        print(f"ctc forced aligner: {merge_text}")
+        return merge_text        
 
 
 def preprocess_text(
