@@ -271,7 +271,6 @@ def split_text(text: str, split_size: str = "word"):
         return text.split()
     elif split_size == "char":
         # return list(text)
-        print(f"ctc forced aligner: {text}")
         merge_text = []
         temp = []
         for i in list(text):
@@ -282,7 +281,6 @@ def split_text(text: str, split_size: str = "word"):
                     merge_text.append("".join(temp))
                     temp=[]
                 merge_text.append(i)
-        print(f"ctc forced aligner: {merge_text}")
         return merge_text        
 
 
