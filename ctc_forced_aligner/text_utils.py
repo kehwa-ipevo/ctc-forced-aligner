@@ -271,18 +271,24 @@ def split_text(text: str, split_size: str = "word"):
         return text.split()
     elif split_size == "char":
         # return list(text)
-        merge_text = []
-        temp = []
-        for i in list(text):
-            if 65<=ord(i)<=122:
-                temp.append(i)
-            else:
-                if temp:
-                    merge_text.append("".join(temp))
-                    temp=[]
-                merge_text.append(i)
-        return merge_text        
+        return split_english_character(text)      
 
+def split_english_character(text: str):
+    merge_text = []
+    temp = []
+    previous = ""
+    for i in list(text):
+        if 65<=ord(i)<=122:
+            if i.isupper() and previous.islower():
+                temp.append(" ")
+            temp.append(i)
+        else:
+            if temp:
+                merge_text.append("".join(temp))
+                temp=[]
+            merge_text.append(i)
+        previous = i
+    return merge_text
 
 def preprocess_text(
     text, romanize, language, split_size="word", star_frequency="segment"
